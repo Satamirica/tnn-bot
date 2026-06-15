@@ -683,7 +683,6 @@ def save_score(user_id, theme, level, score, total):
 def main_menu_kb():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("📚 Пройти тест по теме", callback_data="menu_quiz")],
-        [InlineKeyboardButton("🎲 Угадайка: Вестник или Глашатай?", callback_data="menu_guess")],
         [InlineKeyboardButton("📊 Мои результаты", callback_data="menu_scores")],
         [InlineKeyboardButton("ℹ️ О проекте", callback_data="menu_about")],
     ])
@@ -898,60 +897,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(text, parse_mode="Markdown", reply_markup=finish_kb())
 
     # ── УГАДАЙКА ──────────────────────────────────────────────────────────────
-    elif data == "menu_guess":
-        idx = random.randint(0, len(GUESS_GAME) - 1)
-        set_state(user_id, {"guess_idx": idx, "guess_score": 0, "guess_count": 0})
-        item = GUESS_GAME[idx]
-        text = (
-            "🎲 *Угадайка: Вестник или Глашатай?*\n\n"
-            "Читайте заголовок и угадывайте, кто его написал.\n\n"
-            f"📰 {item['headline']}"
-        )
-        await query.edit_message_text(text, parse_mode="Markdown", reply_markup=guess_kb(idx))
-
-    elif data.startswith("guess_next_"):
-        idx = int(data.replace("guess_next_", ""))
-        new_idx = random.choice([i for i in range(len(GUESS_GAME)) if i != idx])
-        state = get_state(user_id)
-        state["guess_idx"] = new_idx
-        set_state(user_id, state)
-        item = GUESS_GAME[new_idx]
-        text = (
-            "🎲 *Угадайка: Вестник или Глашатай?*\n\n"
-            f"📰 {item['headline']}"
-        )
-        await query.edit_message_text(text, parse_mode="Markdown", reply_markup=guess_kb(new_idx))
-
-    elif data.startswith("guess_"):
-        parts = data.split("_")
-        idx, chosen = int(parts[1]), parts[2]
-        item = GUESS_GAME[idx]
-        correct = item["answer"]
-        state = get_state(user_id)
-        state["guess_count"] = state.get("guess_count", 0) + 1
-
-        if chosen == correct:
-            state["guess_score"] = state.get("guess_score", 0) + 1
-            result = "✅ *Верно!*"
-        else:
-            name = "Тридевятый вестник" if correct == "tv" else "Первый глашатай"
-            result = f"❌ *Не угадали.* Это был *{name}*."
-
-        set_state(user_id, state)
-        score = state["guess_score"]
-        count = state["guess_count"]
-
-        text = (
-            f"📰 {item['headline']}\n\n"
-            f"{result}\n\n"
-            f"💬 {item['explanation']}\n\n"
-            f"Счёт: {score}/{count}"
-        )
-        await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Следующий заголовок →", callback_data=f"guess_next_{idx}")],
-            [InlineKeyboardButton("🏠 Главное меню", callback_data="back_main")],
-        ]))
-
 async def send_question(query, theme, level, q_idx):
     questions = QUIZ_DATA[theme]["levels"][level]["questions"]
     q = questions[q_idx]
